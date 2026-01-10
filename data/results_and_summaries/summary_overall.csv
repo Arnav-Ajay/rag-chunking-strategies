@@ -1,0 +1,12 @@
+Metric,Heuristic,Cross-Encoder
+Total questions,54,54
+Questions with any relevant retrieval,22,31
+"Median rank (first relevant, any retriever)",13.5,2
+% rank > Top-K (K=4),92.59%,61.11%
+,,
+,,
+Top-K success rate (Dense),0%,
+Top-K success rate (Sparse),29.63%,
+Top-K success rate (Hybrid),25.93%,
+Top-K success rate (Heuristic Reranker),~8–10%,
+Top-K success rate (Cross-Encoder),~40%,

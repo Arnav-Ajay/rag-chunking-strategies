@@ -1,0 +1,8 @@
+question_intent,n_questions,heuristic_top_k_hits,cross_top_k_hits,heuristic_median_rank,cross_median_rank,heuristic_median_delta,cross_median_delta
+capability,4,0,1,18.5,3.5,-20,2
+comparative,9,2,5,8.5,1.5,-3,0.5
+definition,17,2,8,6.5,2,-3,2
+historical,3,0,0,19,11,20,28
+mechanism,13,0,3,10,3,-6,3.5
+principle,3,0,2,22,2,-20,0.5
+process,5,0,2,14.5,10.5,-13.5,0
