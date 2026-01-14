@@ -1,5 +1,27 @@
 # `rag-chunking-Stratrgies`
 
+## **TL;DR — What Chunking Actually Changes**
+
+```
+Fixed Chunking
+└── Mostly Atomic (inflated by boundary overlap)
+
+Structural Chunking
+├── Atomic facts preserved
+└── Section-level intent exposed
+
+Semantic Chunking
+├── True atomic facts survive
+├── Some questions require composition
+└── Some questions disappear entirely
+```
+
+**Key takeaway:**
+
+> Chunking does not just affect retrieval quality — it determines *what kinds of questions are even answerable*.
+
+---
+
 ## Why Chunking Matters in RAG
 
 Chunking is the process of **splitting source documents into retrievable units** before embedding and retrieval.
