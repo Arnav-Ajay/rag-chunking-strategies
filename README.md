@@ -137,7 +137,7 @@ They do **not** answer the more fundamental question:
 If no such chunk exists, retrieval quality is irrelevant —
 the answer is **unrepresentable**, regardless of retriever or reranker quality.
 
-#### Representability as the Primary Evaluation Criterion
+### Representability as the Primary Evaluation Criterion
 
 For each question and each chunking strategy, we manually determine:
 
@@ -161,7 +161,7 @@ Each *(question × chunking strategy)* pair is labeled as:
 
 These labels are assigned **independently of retrieval behavior**.
 
-#### Role of Retrieval Metrics (Secondary)
+### Role of Retrieval Metrics (Secondary)
 
 Retrieval metrics are reported **only after representability is established**, and serve to answer a narrower question:
 
@@ -277,3 +277,75 @@ This repository is designed for **analysis and inspection**, not end-user QA.
 * Designing chunking strategies intentionally
 * Stress-testing assumptions about “atomic” QA
 * Preparing for multi-step or agentic retrieval systems
+
+
+---
+
+## **Representative Case Studies**.
+
+Each one demonstrates a *distinct failure or transition mode*.
+
+---
+
+### Case Study 1 — **Definition Drift Across Chunking Strategies (Q24)**
+
+**Question:**
+*How are large language models defined in terms of scale and architecture?*
+
+**Observed behavior:**
+
+* **Fixed chunking:** Atomic
+* **Structural chunking:** Structural
+* **Semantic chunking:** Compositional
+
+**Explanation:**
+Under fixed chunking, a single chunk happens to co-locate both the architectural definition (transformer-based) and the scale characterization (tens to hundreds of billions of parameters). This makes the question appear atomic.
+Structural chunking separates high-level definitions from architectural context, requiring section-level aggregation. Semantic chunking further splits scale, architecture, and historical framing into distinct semantic units, making a single-chunk answer impossible.
+
+**Takeaway:**
+The *same question* transitions from atomic to compositional purely due to chunking strategy, demonstrating that “atomicity” is not an intrinsic property of the question.
+
+---
+
+### Case Study 2 — **Emergent Abilities Require Cross-Section Reasoning (Q25)**
+
+**Question:**
+*What emergent abilities are observed in large language models?*
+
+**Observed behavior:**
+
+* **Fixed chunking:** Atomic
+* **Structural chunking:** Structural
+* **Semantic chunking:** Compositional
+
+**Explanation:**
+Fixed chunking places the list of emergent abilities (in-context learning, instruction following, multi-step reasoning) in a single chunk by chance. Structural chunking isolates these abilities within a dedicated section, preserving answerability but requiring section awareness.
+Semantic chunking separates the definition of “emergence” from the concrete examples and capability taxonomy, forcing the answer to span multiple chunks.
+
+**Takeaway:**
+Semantic chunking exposes that answering capability-oriented questions often requires *explicit aggregation*, not just retrieval.
+
+---
+
+### Case Study 3 — **Atomic → Unanswerable Transition (Q2)**
+
+**Question:**
+*What aspect of recurrent neural networks prevents parallelization during training?*
+
+**Observed behavior:**
+
+* **Fixed chunking:** Atomic
+* **Structural chunking:** Atomic
+* **Semantic chunking:** ✗ (Not representable)
+
+**Explanation:**
+In fixed and structural chunking, the explanation of sequential hidden-state dependence remains intact. Semantic chunking, however, separates the description of RNN computation from the explanation of its training-time implications, removing the causal chain required to answer the question within a single chunk.
+
+**Takeaway:**
+Semantic coherence does not guarantee causal completeness. Some mechanistic questions become unanswerable without multi-hop reasoning once causal chains are split.
+
+---
+
+> *These cases illustrate that chunking strategy directly determines which questions are representable as single-context answers, independent of retrieval quality.*
+
+---
