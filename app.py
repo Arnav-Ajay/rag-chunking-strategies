@@ -25,7 +25,7 @@ def export_chunks_csv(all_chunks, output_path):
     print(f"Chunks exported to {output_path}")
 
 # Retrieval evaluation
-def run_retrieval_evaluation(vector_store, bm25_index, inspect_k=42, questions_csv=None, output_csv=None):
+def run_retrieval_evaluation(vector_store, bm25_index, inspect_k=42, questions_csv=None, output_csv=None, chunking='fixed'):
     import pandas as pd
     print("Running retrieval evaluation...\n")
 
@@ -64,8 +64,10 @@ def run_retrieval_evaluation(vector_store, bm25_index, inspect_k=42, questions_c
         question_id = row["question_id"]
         question_intent = row["question_intent"]
         question_text = row["question_text"]
-        gold_chunk_id = int(row["gold_chunk_id"])
-        gold_doc_id = row.get("gold_doc_id", "")
+        if chunking == 'fixed': gold_chunk_id = int(row["gold_chunkids_fixed"])
+        elif chunking == 'structural': gold_chunk_id = int(row["gold_chunkids_structural"])
+        elif chunking == 'semantic': gold_chunk_id = int(str(row["gold_chunkids_semantic"]).split(",")[0].strip())
+
 
         dense_results = eval_one("dense", question_text, ids_only=False)
         sparse_results = eval_one("sparse", question_text, ids_only=False)
@@ -92,7 +94,6 @@ def run_retrieval_evaluation(vector_store, bm25_index, inspect_k=42, questions_c
             "question_intent": question_intent,
             "question_text": question_text,
             "gold_chunk_id": gold_chunk_id,
-            "gold_doc_id": gold_doc_id,
 
             # Dense (rag-eval_retrieval)
             "retrieved_chunk_ids_dense": "|".join(map(str, dense_ids)),
@@ -116,13 +117,6 @@ def run_retrieval_evaluation(vector_store, bm25_index, inspect_k=42, questions_c
                 "retrieved_chunk_ids_hybrid": "|".join(map(str, hybrid_ids)),
                 "rank_of_first_relevant_hybrid": rank_of_gold(hybrid_ids),
                 "retrieved_in_top_k_hybrid": in_top_k(hybrid_ids, k=4),
-
-                # Deltas (Dense vs Hybrid)
-                "delta_de_hy_rank": (
-                    (rank_of_gold(dense_ids) - rank_of_gold(hybrid_ids))
-                    if rank_of_gold(dense_ids) != "" and rank_of_gold(hybrid_ids) != ""
-                    else ""
-                )
             })
 
         evaluation_results.append(result)
@@ -135,22 +129,23 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--pdf-dir", default=r"data/input_pdfs/") # Path to directory containing PDFs
     parser.add_argument("--query", default="What is self-attention mechanism?") # Query for retrieval
-    
+
+    parser.add_argument("--chunking-strategy", default="fixed", choices=["fixed", "structural", "semantic"])
     parser.add_argument("--export-chunks", action="store_true") # Export chunks to CSV for debugging
-    parser.add_argument("--corpus-diag", action="store_true") # Print corpus diagnostics
     parser.add_argument("--run-retrieval-eval", action="store_true") # Run retrieval evaluation
 
+    parser.add_argument("--corpus-diag", action="store_true") # Print corpus diagnostics
     parser.add_argument("--chunks-csv", default=r"data/chunks_and_questions/chunks_output.csv") # Path to questions csv
-    parser.add_argument("--questions-csv", default=r"data/chunks_and_questions/question_input.csv") # Path to questions csv
+    parser.add_argument("--questions-csv", default=r"data/chunks_and_questions/input_artifact.csv") # Path to questions csv
     parser.add_argument("--eval-output", default=r"data/results_and_summaries/retrieval_evaluation_results.csv") # output to eval results
-
-    parser.add_argument("--hybrid-retrieval", action="store_true") # enable hybrid retrieval
-    parser.add_argument("--hybrid-output", default=r"data/results_and_summaries/hybrid_evaluation_results.csv") # output to hybrid retrieval
 
     args = parser.parse_args()
 
     pdf_path = args.pdf_dir
     query = args.query
+    if args.run_retrieval_eval:
+        print(f"Input: {args.questions_csv}")
+    else: print(f"Input Query: {query}")
     all_chunks = {}
     global_chunk_id = 0
     corpus_diagnostics = {}
@@ -161,7 +156,7 @@ def main():
     for filename in os.listdir(pdf_path):
         if filename.endswith(".pdf"):
             pdf_text = load_pdf(os.path.join(pdf_path, filename))
-            chunks = chunk_texts(pdf_text)
+            chunks = chunk_texts(pdf_text, strategy=args.chunking_strategy)
             corpus_diagnostics[filename] = len(chunks)
             for _, chunk_text in chunks.items():
                 # Preserve document boundary via prefix (no new data structures)
@@ -204,7 +199,7 @@ def main():
     # Retrieval evaluation
     # updated to run hybrid
     if args.run_retrieval_eval:
-        run_retrieval_evaluation(vector_store, bm25_index=bm25_index, questions_csv=args.questions_csv, output_csv=args.eval_output)
+        run_retrieval_evaluation(vector_store, bm25_index=bm25_index, questions_csv=args.questions_csv, output_csv=args.eval_output, chunking=args.chunking_strategy)
         return
 
     ############# End of Retrieval Observability & Debugging #############
